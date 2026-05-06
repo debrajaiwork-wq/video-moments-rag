@@ -4,11 +4,12 @@ Cheaper than Vertex AI Vector Search for low-volume / bursty workloads —
 truly serverless, pay-per-query, no idle endpoint cost. Trade-off: queries
 take a couple of seconds (vs. <100ms for a deployed Vector Search index).
 """
+
 from __future__ import annotations
 
 import json
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from google.api_core import exceptions as gax_exceptions
 from google.cloud import bigquery
@@ -35,9 +36,7 @@ class VectorStore:
         self.client = bigquery.Client(project=cfg.project_id, location=cfg.location)
         self.dataset_ref = bigquery.DatasetReference(cfg.project_id, cfg.bq_dataset)
         self.table_ref = self.dataset_ref.table(cfg.bq_moments_table)
-        self.full_table_id = (
-            f"{cfg.project_id}.{cfg.bq_dataset}.{cfg.bq_moments_table}"
-        )
+        self.full_table_id = f"{cfg.project_id}.{cfg.bq_dataset}.{cfg.bq_moments_table}"
 
     # ---------- setup ----------
 
@@ -61,16 +60,16 @@ class VectorStore:
 
     def upsert(
         self,
-        moments: List[Dict[str, Any]],
-        embeddings: List[List[float]],
+        moments: list[dict[str, Any]],
+        embeddings: list[list[float]],
         video_id: str,
         gcs_uri: str,
-    ) -> List[str]:
+    ) -> list[str]:
         if len(moments) != len(embeddings):
             raise ValueError("moments / embeddings length mismatch")
-        rows: List[Dict[str, Any]] = []
-        ids: List[str] = []
-        for m, vec in zip(moments, embeddings):
+        rows: list[dict[str, Any]] = []
+        ids: list[str] = []
+        for m, vec in zip(moments, embeddings, strict=True):
             mid = make_moment_id(video_id, m["start_seconds"], m["end_seconds"])
             ids.append(mid)
             rows.append(
@@ -88,9 +87,7 @@ class VectorStore:
             write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
             source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
         )
-        load_job = self.client.load_table_from_json(
-            rows, self.table_ref, job_config=job_config
-        )
+        load_job = self.client.load_table_from_json(rows, self.table_ref, job_config=job_config)
         load_job.result()
         return ids
 
@@ -98,14 +95,12 @@ class VectorStore:
 
     def query(
         self,
-        query_vector: List[float],
+        query_vector: list[float],
         top_k: int = 5,
-        video_id: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        video_id: str | None = None,
+    ) -> list[dict[str, Any]]:
         if video_id:
-            base_clause = (
-                f"(SELECT * FROM `{self.full_table_id}` WHERE video_id = @video_id)"
-            )
+            base_clause = f"(SELECT * FROM `{self.full_table_id}` WHERE video_id = @video_id)"
         else:
             base_clause = f"TABLE `{self.full_table_id}`"
         sql = f"""
@@ -124,18 +119,14 @@ class VectorStore:
         )
         ORDER BY distance ASC
         """
-        params: List[bigquery.ScalarQueryParameter | bigquery.ArrayQueryParameter] = [
+        params: list[bigquery.ScalarQueryParameter | bigquery.ArrayQueryParameter] = [
             bigquery.ArrayQueryParameter("q", "FLOAT64", [float(x) for x in query_vector]),
             bigquery.ScalarQueryParameter("top_k", "INT64", int(top_k)),
         ]
         if video_id:
-            params.append(
-                bigquery.ScalarQueryParameter("video_id", "STRING", video_id)
-            )
-        job = self.client.query(
-            sql, job_config=bigquery.QueryJobConfig(query_parameters=params)
-        )
-        results: List[Dict[str, Any]] = []
+            params.append(bigquery.ScalarQueryParameter("video_id", "STRING", video_id))
+        job = self.client.query(sql, job_config=bigquery.QueryJobConfig(query_parameters=params))
+        results: list[dict[str, Any]] = []
         for row in job.result():
             mj = row["moment_json"]
             moment = json.loads(mj) if isinstance(mj, str) else mj

@@ -1,10 +1,10 @@
 """Call Gemini 2.5 Pro on Vertex AI to extract moments from a video segment."""
+
 from __future__ import annotations
 
 import json
 import time
-from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from google import genai
 from google.genai import types
@@ -23,9 +23,7 @@ SAFETY_SETTINGS = [
 class MomentExtractor:
     def __init__(self, cfg: Config):
         self.cfg = cfg
-        self.client = genai.Client(
-            project=cfg.project_id, location=cfg.location, vertexai=True
-        )
+        self.client = genai.Client(project=cfg.project_id, location=cfg.location, vertexai=True)
         prompts_dir = cfg.project_root / "prompts" / "moments"
         self.system_instruction = (prompts_dir / "system_instruction.txt").read_text(
             encoding="utf-8"
@@ -74,7 +72,7 @@ class MomentExtractor:
         gcs_uri: str,
         segment_start: int,
         segment_end: int,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Run Gemini on one segment and return moments with ABSOLUTE timestamps."""
         seg_duration = segment_end - segment_start
         prompt_text = self.prompt_template.format(
@@ -111,7 +109,7 @@ class MomentExtractor:
         moments = data.get("response", {}).get("moments", [])
 
         # Offset segment-relative timestamps back to source-video timestamps.
-        absolute: List[Dict[str, Any]] = []
+        absolute: list[dict[str, Any]] = []
         for m in moments:
             m = dict(m)
             m["start_seconds"] = int(m.get("start_seconds", 0)) + segment_start
@@ -122,9 +120,9 @@ class MomentExtractor:
     def extract_video(
         self,
         gcs_uri: str,
-        segments: List[Tuple[int, int]],
-    ) -> List[Dict[str, Any]]:
-        out: List[Dict[str, Any]] = []
+        segments: list[tuple[int, int]],
+    ) -> list[dict[str, Any]]:
+        out: list[dict[str, Any]] = []
         for i, (s, e) in enumerate(segments):
             print(f"[extractor] segment {i + 1}/{len(segments)}: {s}-{e}s")
             out.extend(self.extract_segment(gcs_uri, s, e))

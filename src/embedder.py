@@ -1,7 +1,8 @@
 """Vertex AI text embeddings."""
+
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 from google import genai
 from google.genai import types
@@ -9,9 +10,9 @@ from google.genai import types
 from .config import Config
 
 
-def moment_to_text(moment: Dict[str, Any]) -> str:
+def moment_to_text(moment: dict[str, Any]) -> str:
     """Flatten a moment dict into a single retrievable text blob."""
-    parts: List[str] = []
+    parts: list[str] = []
     if title := moment.get("title"):
         parts.append(f"Title: {title}")
     if desc := moment.get("description"):
@@ -36,11 +37,9 @@ def moment_to_text(moment: Dict[str, Any]) -> str:
 class Embedder:
     def __init__(self, cfg: Config):
         self.cfg = cfg
-        self.client = genai.Client(
-            project=cfg.project_id, location=cfg.location, vertexai=True
-        )
+        self.client = genai.Client(project=cfg.project_id, location=cfg.location, vertexai=True)
 
-    def embed(self, texts: List[str], task_type: str = "RETRIEVAL_DOCUMENT") -> List[List[float]]:
+    def embed(self, texts: list[str], task_type: str = "RETRIEVAL_DOCUMENT") -> list[list[float]]:
         if not texts:
             return []
         resp = self.client.models.embed_content(
@@ -53,5 +52,5 @@ class Embedder:
         )
         return [e.values for e in resp.embeddings]
 
-    def embed_query(self, query: str) -> List[float]:
+    def embed_query(self, query: str) -> list[float]:
         return self.embed([query], task_type="RETRIEVAL_QUERY")[0]

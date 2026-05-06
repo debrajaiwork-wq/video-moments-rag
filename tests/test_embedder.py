@@ -1,4 +1,5 @@
 """Tests for src.embedder.moment_to_text — pure formatting, no GCP."""
+
 from __future__ import annotations
 
 from src.embedder import moment_to_text

@@ -1,4 +1,5 @@
 """Tests for src.video_segmenter.split_segments — pure logic, no GCP."""
+
 from __future__ import annotations
 
 from src.video_segmenter import split_segments
@@ -25,7 +26,7 @@ def test_long_video_splits_into_multiple_no_gaps_no_overlaps() -> None:
     assert segments[0][0] == 0
     assert segments[-1][1] == duration
     # contiguous: each segment's end == next segment's start
-    for prev, curr in zip(segments, segments[1:]):
+    for prev, curr in zip(segments, segments[1:], strict=False):
         assert prev[1] == curr[0]
 
 

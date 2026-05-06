@@ -1,4 +1,5 @@
 """Google ADK agent that answers moment queries via RAG."""
+
 from __future__ import annotations
 
 from google.adk.agents import LlmAgent
