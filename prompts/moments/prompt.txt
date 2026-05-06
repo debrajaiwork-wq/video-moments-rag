@@ -1,0 +1,11 @@
+Analyze the attached video segment and extract its moments according to the schema.
+
+Segment context:
+- segment_start_seconds (in the source video): {segment_start_seconds}
+- segment_end_seconds   (in the source video): {segment_end_seconds}
+- segment_duration_seconds: {segment_duration_seconds}
+
+Remember:
+- Use timestamps RELATIVE TO THE SEGMENT (0 .. segment_duration_seconds). The ingestion code will offset them back to the source video.
+- Cover the segment fully, no gaps, no overlaps.
+- Return JSON matching the schema. No extra commentary.
