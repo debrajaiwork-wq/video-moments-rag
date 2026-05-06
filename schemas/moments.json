@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "properties": {
+    "response": {
+      "type": "object",
+      "properties": {
+        "moments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "start_seconds": { "type": "integer", "minimum": 0 },
+              "end_seconds": { "type": "integer", "minimum": 0 },
+              "title": { "type": "string" },
+              "description": { "type": "string" },
+              "scene_type": {
+                "type": "string",
+                "enum": ["dialogue", "action", "montage", "establishing", "transition", "other"]
+              },
+              "entities": { "type": "array", "items": { "type": "string" } },
+              "actions": { "type": "array", "items": { "type": "string" } },
+              "location": { "type": "string" },
+              "dialogue_summary": { "type": "string" },
+              "mood": { "type": "string" },
+              "keywords": { "type": "array", "items": { "type": "string" } }
+            },
+            "required": [
+              "start_seconds",
+              "end_seconds",
+              "title",
+              "description",
+              "scene_type",
+              "entities",
+              "actions",
+              "location",
+              "dialogue_summary",
+              "mood",
+              "keywords"
+            ]
+          }
+        }
+      },
+      "required": ["moments"]
+    }
+  },
+  "required": ["response"]
+}
