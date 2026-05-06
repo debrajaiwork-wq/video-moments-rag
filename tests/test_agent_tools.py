@@ -1,4 +1,5 @@
 """Tests for src.agent.tools — fully mocked embedder + vector store."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -84,9 +85,7 @@ def test_get_clip_url_calls_signed_url(monkeypatch: pytest.MonkeyPatch, mocked_t
     captured: dict = {}
 
     def fake_signed(cfg, gcs_uri, start, end, expires):
-        captured.update(
-            {"cfg": cfg, "uri": gcs_uri, "start": start, "end": end, "exp": expires}
-        )
+        captured.update({"cfg": cfg, "uri": gcs_uri, "start": start, "end": end, "exp": expires})
         return f"https://signed/{gcs_uri}#t={start},{end}"
 
     monkeypatch.setattr(tools, "signed_clip_url", fake_signed)

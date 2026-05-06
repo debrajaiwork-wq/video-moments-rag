@@ -4,6 +4,7 @@ Sets fake env vars so `Config.load()` succeeds without a real .env, and adds
 the project root to sys.path so `import src.*` works whether pytest is run
 from the project root or from `tests/`.
 """
+
 from __future__ import annotations
 
 import sys

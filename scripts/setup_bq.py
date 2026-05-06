@@ -2,6 +2,7 @@
 
 Idempotent — safe to re-run. Cheap and fast (no LRO, no waiting).
 """
+
 from __future__ import annotations
 
 import sys

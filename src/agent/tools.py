@@ -1,16 +1,17 @@
 """Tools the ADK agent can call: retrieve moments and build a playable clip URL."""
+
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..config import Config
 from ..embedder import Embedder
 from ..gcs_utils import signed_clip_url
 from ..vector_store import VectorStore
 
-_cfg: Optional[Config] = None
-_embedder: Optional[Embedder] = None
-_store: Optional[VectorStore] = None
+_cfg: Config | None = None
+_embedder: Embedder | None = None
+_store: VectorStore | None = None
 
 
 def _ensure_loaded() -> None:
@@ -23,7 +24,7 @@ def _ensure_loaded() -> None:
         _store = VectorStore(_cfg)
 
 
-def retrieve_moments(query: str, top_k: int = 5, video_id: str = "") -> Dict[str, Any]:
+def retrieve_moments(query: str, top_k: int = 5, video_id: str = "") -> dict[str, Any]:
     """Search the moment vector index.
 
     Args:
@@ -40,7 +41,7 @@ def retrieve_moments(query: str, top_k: int = 5, video_id: str = "") -> Dict[str
     top_k = max(1, min(int(top_k), 20))
     vec = _embedder.embed_query(query)
     hits = _store.query(query_vector=vec, top_k=top_k, video_id=video_id or None)
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for h in hits:
         m = h.get("moment", {})
         out.append(
@@ -70,7 +71,7 @@ def get_clip_url(
     start_seconds: int,
     end_seconds: int,
     expires_minutes: int = 60,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """Generate a signed HTTPS URL for a moment clip.
 
     Args:
@@ -84,7 +85,5 @@ def get_clip_url(
     """
     _ensure_loaded()
     assert _cfg is not None
-    url = signed_clip_url(
-        _cfg, gcs_uri, int(start_seconds), int(end_seconds), int(expires_minutes)
-    )
+    url = signed_clip_url(_cfg, gcs_uri, int(start_seconds), int(end_seconds), int(expires_minutes))
     return {"url": url}

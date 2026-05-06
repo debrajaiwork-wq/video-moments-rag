@@ -2,6 +2,7 @@
 
 Verifies that segment-relative timestamps get offset back to source-video time.
 """
+
 from __future__ import annotations
 
 import json

@@ -4,6 +4,7 @@ Cancels any in-progress deploy LRO on the endpoint, then deletes the index
 endpoint (force=True undeploys first) and the index. Idempotent — re-running
 on already-deleted resources is fine.
 """
+
 from __future__ import annotations
 
 import sys
@@ -56,9 +57,7 @@ def main() -> None:
             print(f"  delete failed: {e}")
             print("  --> the deploy may still be in progress; wait a minute and re-run.")
 
-    indexes = aiplatform.MatchingEngineIndex.list(
-        filter=f'display_name="{INDEX_DISPLAY_NAME}"'
-    )
+    indexes = aiplatform.MatchingEngineIndex.list(filter=f'display_name="{INDEX_DISPLAY_NAME}"')
     for idx in indexes:
         print(f"Index: {idx.resource_name}")
         try:

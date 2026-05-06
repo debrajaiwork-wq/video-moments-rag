@@ -4,6 +4,7 @@ ADK expects an `agents_dir/<name>/agent.py` exposing `root_agent` at the module
 level. The actual agent is built in `src/agent/agent.py`; this thin wrapper
 just makes the project root importable and re-exports it.
 """
+
 from __future__ import annotations
 
 import sys

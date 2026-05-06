@@ -1,4 +1,5 @@
 """CLI: ingest one video file or gs:// URI."""
+
 from __future__ import annotations
 
 import sys
