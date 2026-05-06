@@ -1,4 +1,5 @@
 """Central configuration loaded from environment / .env."""
+
 from __future__ import annotations
 
 import os
@@ -34,7 +35,7 @@ class Config:
     project_root: Path
 
     @classmethod
-    def load(cls) -> "Config":
+    def load(cls) -> Config:
         return cls(
             project_id=_required("GCP_PROJECT_ID"),
             location=os.environ.get("GCP_LOCATION", "us-central1"),

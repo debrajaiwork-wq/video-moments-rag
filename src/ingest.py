@@ -1,9 +1,10 @@
 """End-to-end ingest: video file/URI -> Gemini moments -> embeddings -> Vector Search."""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .config import Config
 from .embedder import Embedder, moment_to_text
@@ -16,11 +17,11 @@ from .video_segmenter import probe_duration, split_segments
 def ingest_video(
     cfg: Config,
     source: str,
-    video_id: Optional[str] = None,
+    video_id: str | None = None,
     segment_length: int = 600,
     overlap: int = 0,
     save_local: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Ingest a single video. `source` is either a local path or a gs:// URI."""
     if source.startswith("gs://"):
         gcs_uri = source
