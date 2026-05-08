@@ -1,4 +1,8 @@
-"""Tests for src.agent.tools — fully mocked embedder + vector store."""
+"""Tests for src.agent.tools — fully mocked embedder + vector store.
+
+LangChain @tool-decorated functions can be called directly as regular functions
+via .invoke() or by calling the underlying func attribute.
+"""
 
 from __future__ import annotations
 
@@ -45,7 +49,7 @@ def test_retrieve_moments_returns_flattened_hits(mocked_tools) -> None:
         }
     ]
 
-    out = tools.retrieve_moments("opening scene", top_k=3)
+    out = tools.retrieve_moments.invoke({"query": "opening scene", "top_k": 3, "video_id": ""})
 
     assert "moments" in out
     assert len(out["moments"]) == 1
@@ -55,7 +59,6 @@ def test_retrieve_moments_returns_flattened_hits(mocked_tools) -> None:
     assert hit["end_seconds"] == 30
     assert hit["distance"] == pytest.approx(0.42)
     fake_embedder.embed_query.assert_called_once_with("opening scene")
-    # video_id="" should pass None (not the empty string) to the store.
     fake_store.query.assert_called_once()
     kwargs = fake_store.query.call_args.kwargs
     assert kwargs["top_k"] == 3
@@ -65,19 +68,19 @@ def test_retrieve_moments_returns_flattened_hits(mocked_tools) -> None:
 def test_retrieve_moments_clamps_top_k(mocked_tools) -> None:
     _, _, fake_store = mocked_tools
     fake_store.query.return_value = []
-    tools.retrieve_moments("q", top_k=999)
+    tools.retrieve_moments.invoke({"query": "q", "top_k": 999, "video_id": ""})
     assert fake_store.query.call_args.kwargs["top_k"] == 20
 
     fake_store.reset_mock()
     fake_store.query.return_value = []
-    tools.retrieve_moments("q", top_k=0)
+    tools.retrieve_moments.invoke({"query": "q", "top_k": 0, "video_id": ""})
     assert fake_store.query.call_args.kwargs["top_k"] == 1
 
 
 def test_retrieve_moments_passes_video_id(mocked_tools) -> None:
     _, _, fake_store = mocked_tools
     fake_store.query.return_value = []
-    tools.retrieve_moments("q", top_k=5, video_id="vid42")
+    tools.retrieve_moments.invoke({"query": "q", "top_k": 5, "video_id": "vid42"})
     assert fake_store.query.call_args.kwargs["video_id"] == "vid42"
 
 
@@ -89,7 +92,9 @@ def test_get_clip_url_calls_signed_url(monkeypatch: pytest.MonkeyPatch, mocked_t
         return f"https://signed/{gcs_uri}#t={start},{end}"
 
     monkeypatch.setattr(tools, "signed_clip_url", fake_signed)
-    out = tools.get_clip_url("gs://b/v.mp4", 10, 30, expires_minutes=15)
+    out = tools.get_clip_url.invoke(
+        {"gcs_uri": "gs://b/v.mp4", "start_seconds": 10, "end_seconds": 30, "expires_minutes": 15}
+    )
 
     assert out == {"url": "https://signed/gs://b/v.mp4#t=10,30"}
     assert captured["start"] == 10

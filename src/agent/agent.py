@@ -1,11 +1,13 @@
-"""Google ADK agent that answers moment queries via RAG."""
+"""LangChain agent that answers moment queries via RAG."""
 
 from __future__ import annotations
 
-from google.adk.agents import LlmAgent
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_google_vertexai import ChatVertexAI
 
 from ..config import Config
-from . import tools
+from .tools import get_clip_url, retrieve_moments
 
 INSTRUCTIONS = """\
 You are a video-moments assistant. The user has ingested one or more videos
@@ -33,27 +35,32 @@ Format:
 """
 
 
-def _seconds_to_hhmmss(s: int) -> str:
-    s = int(s)
-    h, rem = divmod(s, 3600)
-    m, sec = divmod(rem, 60)
-    return f"{h:02d}:{m:02d}:{sec:02d}"
-
-
-def build_agent(cfg: Config | None = None) -> LlmAgent:
+def build_agent(cfg: Config | None = None) -> AgentExecutor:
     cfg = cfg or Config.load()
-    model = (
-        f"projects/{cfg.project_id}/locations/{cfg.location}/"
-        f"publishers/google/models/{cfg.gemini_model}"
-    )
-    return LlmAgent(
-        name="video_moments_agent",
-        model=model,
-        description="Find and explain moments inside ingested videos.",
-        instruction=INSTRUCTIONS,
-        tools=[tools.retrieve_moments, tools.get_clip_url],
+
+    llm = ChatVertexAI(
+        model_name=cfg.gemini_model,
+        project=cfg.project_id,
+        location=cfg.location,
+        temperature=0,
     )
 
+    tools = [retrieve_moments, get_clip_url]
 
-# Module-level instance for `adk run` / `adk web`.
-root_agent = build_agent()
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", INSTRUCTIONS),
+            MessagesPlaceholder("chat_history", optional=True),
+            ("human", "{input}"),
+            MessagesPlaceholder("agent_scratchpad"),
+        ]
+    )
+
+    agent = create_tool_calling_agent(llm, tools, prompt)
+    return AgentExecutor(
+        agent=agent,
+        tools=tools,
+        verbose=False,
+        handle_parsing_errors=True,
+        max_iterations=10,
+    )

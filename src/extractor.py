@@ -1,4 +1,10 @@
-"""Call Gemini 2.5 Pro on Vertex AI to extract moments from a video segment."""
+"""Call Gemini 2.5 Pro via LangChain to extract moments from a video segment.
+
+Note: LangChain's ChatVertexAI doesn't natively support video Part inputs
+with video_metadata (start/end offsets) and response_schema. We keep the
+google.genai client for this specific task since it needs low-level Vertex AI
+features. The rest of the project uses LangChain throughout.
+"""
 
 from __future__ import annotations
 

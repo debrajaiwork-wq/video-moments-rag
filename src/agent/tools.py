@@ -1,8 +1,10 @@
-"""Tools the ADK agent can call: retrieve moments and build a playable clip URL."""
+"""LangChain tools: retrieve moments and build a playable clip URL."""
 
 from __future__ import annotations
 
 from typing import Any
+
+from langchain_core.tools import tool
 
 from ..config import Config
 from ..embedder import Embedder
@@ -24,8 +26,9 @@ def _ensure_loaded() -> None:
         _store = VectorStore(_cfg)
 
 
+@tool
 def retrieve_moments(query: str, top_k: int = 5, video_id: str = "") -> dict[str, Any]:
-    """Search the moment vector index.
+    """Search the moment vector index for video moments matching a query.
 
     Args:
         query: Natural language description of the moment to find.
@@ -66,6 +69,7 @@ def retrieve_moments(query: str, top_k: int = 5, video_id: str = "") -> dict[str
     return {"moments": out}
 
 
+@tool
 def get_clip_url(
     gcs_uri: str,
     start_seconds: int,

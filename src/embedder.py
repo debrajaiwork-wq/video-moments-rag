@@ -1,11 +1,10 @@
-"""Vertex AI text embeddings."""
+"""Vertex AI text embeddings via LangChain."""
 
 from __future__ import annotations
 
 from typing import Any
 
-from google import genai
-from google.genai import types
+from langchain_google_vertexai import VertexAIEmbeddings
 
 from .config import Config
 
@@ -37,20 +36,16 @@ def moment_to_text(moment: dict[str, Any]) -> str:
 class Embedder:
     def __init__(self, cfg: Config):
         self.cfg = cfg
-        self.client = genai.Client(project=cfg.project_id, location=cfg.location, vertexai=True)
+        self.model = VertexAIEmbeddings(
+            model_name=cfg.embedding_model,
+            project=cfg.project_id,
+            location=cfg.location,
+        )
 
     def embed(self, texts: list[str], task_type: str = "RETRIEVAL_DOCUMENT") -> list[list[float]]:
         if not texts:
             return []
-        resp = self.client.models.embed_content(
-            model=self.cfg.embedding_model,
-            contents=texts,
-            config=types.EmbedContentConfig(
-                task_type=task_type,
-                output_dimensionality=self.cfg.embedding_dim,
-            ),
-        )
-        return [e.values for e in resp.embeddings]
+        return self.model.embed_documents(texts)
 
     def embed_query(self, query: str) -> list[float]:
-        return self.embed([query], task_type="RETRIEVAL_QUERY")[0]
+        return self.model.embed_query(query)
