@@ -16,9 +16,12 @@ console = Console()
 
 
 def _chat() -> None:
-    executor = build_agent()
+    executor, callbacks = build_agent()
     chat_history: list = []
-    console.print("[bold cyan]video-moments-rag chat[/bold cyan]  (Ctrl+C to exit)")
+    if callbacks:
+        console.print("[bold cyan]video-moments-rag chat[/bold cyan]  [green](Langfuse ON)[/green]  (Ctrl+C to exit)")
+    else:
+        console.print("[bold cyan]video-moments-rag chat[/bold cyan]  (Ctrl+C to exit)")
     while True:
         try:
             user = console.input("[bold green]you> [/bold green]").strip()
@@ -27,7 +30,10 @@ def _chat() -> None:
             return
         if not user:
             continue
-        result = executor.invoke({"input": user, "chat_history": chat_history})
+        result = executor.invoke(
+            {"input": user, "chat_history": chat_history},
+            config={"callbacks": callbacks} if callbacks else {},
+        )
         reply = result.get("output", "").strip()
         if reply:
             console.print(Markdown(reply))

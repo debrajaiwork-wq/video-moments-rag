@@ -16,6 +16,6 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.agent.agent import build_agent  # noqa: E402
 
 # Build the agent executor for external discovery.
-agent_executor = build_agent()
+agent_executor, langfuse_callbacks = build_agent()
 
-__all__ = ["agent_executor"]
+__all__ = ["agent_executor", "langfuse_callbacks"]

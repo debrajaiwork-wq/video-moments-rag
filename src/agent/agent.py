@@ -2,12 +2,35 @@
 
 from __future__ import annotations
 
+import logging
+import os
+
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_google_vertexai import ChatVertexAI
 
 from ..config import Config
 from .tools import get_clip_url, retrieve_moments
+
+logger = logging.getLogger(__name__)
+
+
+def _get_langfuse_handler():
+    """Create Langfuse callback handler if keys are configured."""
+    public_key = os.environ.get("LANGFUSE_PUBLIC_KEY")
+    secret_key = os.environ.get("LANGFUSE_SECRET_KEY")
+    if not public_key or not secret_key:
+        logger.info("Langfuse keys not set — observability disabled.")
+        return None
+    try:
+        from langfuse.langchain import CallbackHandler
+
+        handler = CallbackHandler()
+        logger.info("Langfuse observability enabled.")
+        return handler
+    except ImportError:
+        logger.warning("langfuse package not installed — observability disabled.")
+        return None
 
 INSTRUCTIONS = """\
 You are a video-moments assistant. The user has ingested one or more videos
@@ -35,7 +58,14 @@ Format:
 """
 
 
-def build_agent(cfg: Config | None = None) -> AgentExecutor:
+def build_agent(
+    cfg: Config | None = None,
+) -> tuple[AgentExecutor, list]:
+    """Build the LangChain agent with optional Langfuse observability.
+
+    Returns:
+        (executor, callbacks) — pass callbacks into executor.invoke(..., config={"callbacks": callbacks})
+    """
     cfg = cfg or Config.load()
 
     llm = ChatVertexAI(
@@ -57,10 +87,18 @@ def build_agent(cfg: Config | None = None) -> AgentExecutor:
     )
 
     agent = create_tool_calling_agent(llm, tools, prompt)
-    return AgentExecutor(
+    executor = AgentExecutor(
         agent=agent,
         tools=tools,
         verbose=False,
         handle_parsing_errors=True,
         max_iterations=10,
     )
+
+    # Langfuse observability
+    callbacks = []
+    langfuse_handler = _get_langfuse_handler()
+    if langfuse_handler:
+        callbacks.append(langfuse_handler)
+
+    return executor, callbacks
