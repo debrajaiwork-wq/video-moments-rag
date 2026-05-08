@@ -10,7 +10,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_google_vertexai import ChatVertexAI
 
 from ..config import Config
-from .tools import get_clip_url, retrieve_moments
+from .tools import get_clip_url, get_social_buzz, retrieve_moments
 
 logger = logging.getLogger(__name__)
 
@@ -42,14 +42,23 @@ Workflow for every user turn:
    top_k=5 unless they imply they want more. If the user mentions a specific
    video_id, pass it through.
 2. If retrieve_moments returns no results, say so plainly.
-3. Otherwise, answer using ONLY the returned moments. For each moment you
-   cite, include:
+3. Optionally, call `get_social_buzz` with the video title or topic to get
+   social media signals (YouTube views/likes/comments, Reddit discussions).
+   Use this to:
+   - Highlight moments that match trending discussions
+   - Add context like "this scene is a fan favorite" if social data supports it
+   - Mention engagement stats if they're notable (e.g., millions of views)
+   Do NOT call get_social_buzz for every query — only when the user asks about
+   popularity, trending topics, or what people think, or when social context
+   would genuinely enrich the answer.
+4. Answer using ONLY the returned moments. For each moment you cite, include:
      - the title
      - the timestamp range as [HH:MM:SS - HH:MM:SS]
      - a one-sentence description grounded in the moment payload
-4. If the user asks for a playable clip, call `get_clip_url` with the
+     - if social data is available, a brief note on social buzz
+5. If the user asks for a playable clip, call `get_clip_url` with the
    matching gcs_uri/start/end and surface the URL inline.
-5. Never invent moments, entities, or dialogue that are not in the tool
+6. Never invent moments, entities, or dialogue that are not in the tool
    results. If the answer cannot be grounded, say so.
 
 Format:
@@ -75,7 +84,7 @@ def build_agent(
         temperature=0,
     )
 
-    tools = [retrieve_moments, get_clip_url]
+    tools = [retrieve_moments, get_clip_url, get_social_buzz]
 
     prompt = ChatPromptTemplate.from_messages(
         [

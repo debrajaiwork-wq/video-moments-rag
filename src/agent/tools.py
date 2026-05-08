@@ -9,6 +9,7 @@ from langchain_core.tools import tool
 from ..config import Config
 from ..embedder import Embedder
 from ..gcs_utils import signed_clip_url
+from ..social import fetch_social_signals
 from ..vector_store import VectorStore
 
 _cfg: Config | None = None
@@ -91,3 +92,21 @@ def get_clip_url(
     assert _cfg is not None
     url = signed_clip_url(_cfg, gcs_uri, int(start_seconds), int(end_seconds), int(expires_minutes))
     return {"url": url}
+
+
+@tool
+def get_social_buzz(query: str) -> dict[str, Any]:
+    """Fetch social media buzz (YouTube + Reddit) about a video or topic.
+
+    Use this tool AFTER retrieve_moments to enrich results with social
+    signals. The social data helps highlight which moments align with
+    what people are talking about online.
+
+    Args:
+        query: Video title, topic, or YouTube URL/ID to search for.
+
+    Returns:
+        Dict with engagement metrics, top comments, trending topics,
+        and sentiment from YouTube and Reddit.
+    """
+    return fetch_social_signals(query)
